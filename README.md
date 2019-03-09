@@ -1,3 +1,9 @@
+# HOW DOES PARSING WORK IN ELM!
+
+This is a repository of trying out building parsers in Elm. So much fun.
+
+
+
 # Elm 0.19 with Webpack 4, Hot Reloading & Babel 7
 
 Elm dev environment with hot-loading (i.e. state is retained as you edit your code - Hot Module Reloading, HMR)). I use this daily for my professional work. Like elm-community/elm-webpack-starter but using Webpack 4.
