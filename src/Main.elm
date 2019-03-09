@@ -25,14 +25,13 @@ type alias Point =
     }
 
 
-type alias ParseResult a =
-    Result (List P.DeadEnd) a
+type ParsedType
+    = ParsedFloat Float
 
 
 type ParsedValue
     = None
-    | ParsedFloat (ParseResult Float)
-    | ParsedPoint (ParseResult Point)
+    | ParsedResult (Result (List P.DeadEnd) ParsedType)
 
 
 init : Model
@@ -50,6 +49,7 @@ type Msg
     = UpdateTextToParse String
     | ParseFloat
     | ParsePoint
+    | ParseAny
 
 
 update : Msg -> Model -> Model
@@ -59,41 +59,52 @@ update message model =
             { model | textToParse = text }
 
         ParseFloat ->
-            { model | parsedValue = parseFloat model.textToParse }
+            { model | parsedValue = parse floatParser model.textToParse }
 
         ParsePoint ->
-            { model | parsedValue = parsePoint model.textToParse }
+            model
+
+        --{ model | parsedValue = parsePoint model.textToParse }
+        ParseAny ->
+            model
 
 
-parseFloat : String -> ParsedValue
-parseFloat textToParse =
+
+--{ model | parsedValue = parseAny model.textToParse }
+--parseAny : String -> ParsedValue
+--parseAny textToParse =
+--ParsedFloat (Ok 1.0)
+
+
+parse : Parser ParsedType -> String -> ParsedValue
+parse parser textToParse =
     textToParse
-        |> P.run P.float
-        |> ParsedFloat
+        |> P.run parser
+        |> ParsedResult
 
 
-parsePoint : String -> ParsedValue
-parsePoint textToParse =
-    textToParse
-        |> P.run pointParser
-        |> ParsedPoint
-
-
-pointParser : P.Parser Point
-pointParser =
-    P.succeed Point
-        |. P.symbol "("
-        |. P.spaces
-        |= P.float
-        |. P.spaces
-        |. P.symbol ","
-        |. P.spaces
-        |= P.float
-        |. P.spaces
-        |. P.symbol ")"
+floatParser : Parser ParsedType
+floatParser =
+    P.map ParsedFloat P.float
 
 
 
+--parsePoint : String -> ParsedValue
+--parsePoint textToParse =
+--textToParse
+--|> P.run (pointParser >> P.map ParsedPoint)
+--pointParser : P.Parser Point
+--pointParser =
+--P.succeed Point
+--|. P.symbol "("
+--|. P.spaces
+--|= P.float
+--|. P.spaces
+--|. P.symbol ","
+--|. P.spaces
+--|= P.float
+--|. P.spaces
+--|. P.symbol ")"
 -- ---------------------------
 -- VIEW
 -- ---------------------------
@@ -111,8 +122,12 @@ view model =
             [ p [] [ text "Parsing Text" ]
             , textarea [ cols 50, rows 10, onInput UpdateTextToParse ] []
             , br [] []
-            , button [ onClick ParseFloat ] [ text "Parse Float" ]
-            , button [ onClick ParsePoint ] [ text "Parse Point" ]
+            , div []
+                [ button [ onClick ParseFloat ] [ text "Parse Float" ]
+                , button [ onClick ParsePoint ] [ text "Parse Point" ]
+                ]
+            , br [] []
+            , button [ onClick ParseAny ] [ text "Figure It Out (float 1.0 or Point (1, 5)" ]
             ]
         , div []
             [ p [] [ text "Model" ]
