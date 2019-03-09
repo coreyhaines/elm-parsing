@@ -27,6 +27,7 @@ type alias Point =
 
 type ParsedType
     = ParsedFloat Float
+    | ParsedPoint Point
 
 
 type ParsedValue
@@ -62,7 +63,7 @@ update message model =
             { model | parsedValue = parse floatParser model.textToParse }
 
         ParsePoint ->
-            model
+            { model | parsedValue = parse pointParser model.textToParse }
 
         --{ model | parsedValue = parsePoint model.textToParse }
         ParseAny ->
@@ -88,23 +89,23 @@ floatParser =
     P.map ParsedFloat P.float
 
 
+pointParser : P.Parser ParsedType
+pointParser =
+    P.map ParsedPoint <|
+        (P.succeed Point
+            |. P.symbol "("
+            |. P.spaces
+            |= P.float
+            |. P.spaces
+            |. P.symbol ","
+            |. P.spaces
+            |= P.float
+            |. P.spaces
+            |. P.symbol ")"
+        )
 
---parsePoint : String -> ParsedValue
---parsePoint textToParse =
---textToParse
---|> P.run (pointParser >> P.map ParsedPoint)
---pointParser : P.Parser Point
---pointParser =
---P.succeed Point
---|. P.symbol "("
---|. P.spaces
---|= P.float
---|. P.spaces
---|. P.symbol ","
---|. P.spaces
---|= P.float
---|. P.spaces
---|. P.symbol ")"
+
+
 -- ---------------------------
 -- VIEW
 -- ---------------------------
