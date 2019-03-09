@@ -79,7 +79,18 @@ parse parser textToParse =
 parseAny : Parser ParsedType
 parseAny =
     P.getChompedString (P.chompUntil " ")
-        |> P.andThen (\parseType -> floatParser)
+        |> P.andThen
+            (\parseType ->
+                case parseType of
+                    "float" ->
+                        floatParser
+
+                    "point" ->
+                        pointParser
+
+                    _ ->
+                        P.problem "Identifier should be 'float' or 'point'"
+            )
 
 
 floatParser : Parser ParsedType
