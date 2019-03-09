@@ -65,16 +65,8 @@ update message model =
         ParsePoint ->
             { model | parsedValue = parse pointParser model.textToParse }
 
-        --{ model | parsedValue = parsePoint model.textToParse }
         ParseAny ->
-            model
-
-
-
---{ model | parsedValue = parseAny model.textToParse }
---parseAny : String -> ParsedValue
---parseAny textToParse =
---ParsedFloat (Ok 1.0)
+            { model | parsedValue = parse parseAny model.textToParse }
 
 
 parse : Parser ParsedType -> String -> ParsedValue
@@ -84,15 +76,26 @@ parse parser textToParse =
         |> ParsedResult
 
 
+parseAny : Parser ParsedType
+parseAny =
+    P.getChompedString (P.chompUntil " ")
+        |> P.andThen (\parseType -> floatParser)
+
+
 floatParser : Parser ParsedType
 floatParser =
-    P.map ParsedFloat P.float
+    P.map ParsedFloat <|
+        (P.succeed identity
+            |. P.spaces
+            |= P.float
+        )
 
 
 pointParser : P.Parser ParsedType
 pointParser =
     P.map ParsedPoint <|
         (P.succeed Point
+            |. P.spaces
             |. P.symbol "("
             |. P.spaces
             |= P.float
