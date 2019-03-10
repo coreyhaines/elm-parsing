@@ -41,36 +41,27 @@ type ParsedValue
     | ParsedResult (Result (List P.DeadEnd) ParsedType)
 
 
-parse : Parser ParsedType -> String -> ParsedValue
-parse parser textToParse =
+parse : String -> ParsedValue
+parse textToParse =
     textToParse
-        |> P.run parser
+        |> P.run parseAny
         |> ParsedResult
-
-
-chooseParser : String -> Parser ParsedType
-chooseParser parserType =
-    case parserType of
-        "float" ->
-            floatParser
-
-        "point" ->
-            pointParser
-
-        _ ->
-            P.problem "Unsupported identifier"
 
 
 parseAny : Parser ParsedType
 parseAny =
-    P.getChompedString (P.chompUntil " ")
-        |> P.andThen chooseParser
+    P.oneOf
+        [ floatParser
+        , pointParser
+        ]
 
 
 floatParser : Parser ParsedType
 floatParser =
     P.map ParsedFloat <|
         (P.succeed identity
+            |. P.spaces
+            |. P.keyword "float"
             |. P.spaces
             |= P.float
         )
@@ -80,6 +71,8 @@ pointParser : P.Parser ParsedType
 pointParser =
     P.map ParsedPoint <|
         (P.succeed Point
+            |. P.spaces
+            |. P.keyword "point"
             |. P.spaces
             |. P.symbol "("
             |. P.spaces
@@ -116,7 +109,7 @@ update message model =
             { model | textToParse = text }
 
         ParseText ->
-            { model | parsedValue = parse parseAny model.textToParse }
+            { model | parsedValue = parse model.textToParse }
 
 
 
