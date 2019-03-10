@@ -78,19 +78,20 @@ parse parser textToParse =
 
 parseAny : Parser ParsedType
 parseAny =
+    let
+        chooseParser parserType =
+            case parserType of
+                "float" ->
+                    floatParser
+
+                "point" ->
+                    pointParser
+
+                _ ->
+                    P.problem "Identifier should be 'float' or 'point'"
+    in
     P.getChompedString (P.chompUntil " ")
-        |> P.andThen
-            (\parseType ->
-                case parseType of
-                    "float" ->
-                        floatParser
-
-                    "point" ->
-                        pointParser
-
-                    _ ->
-                        P.problem "Identifier should be 'float' or 'point'"
-            )
+        |> P.andThen chooseParser
 
 
 floatParser : Parser ParsedType
