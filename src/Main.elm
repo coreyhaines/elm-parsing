@@ -25,6 +25,12 @@ type alias Point =
     }
 
 
+
+-- ---------------------------
+-- PARSING
+-- ---------------------------
+
+
 type ParsedType
     = ParsedFloat Float
     | ParsedPoint Point
@@ -35,40 +41,6 @@ type ParsedValue
     | ParsedResult (Result (List P.DeadEnd) ParsedType)
 
 
-init : Model
-init =
-    { textToParse = "", parsedValue = None }
-
-
-
--- ---------------------------
--- UPDATE
--- ---------------------------
-
-
-type Msg
-    = UpdateTextToParse String
-    | ParseFloat
-    | ParsePoint
-    | ParseAny
-
-
-update : Msg -> Model -> Model
-update message model =
-    case message of
-        UpdateTextToParse text ->
-            { model | textToParse = text }
-
-        ParseFloat ->
-            { model | parsedValue = parse floatParser model.textToParse }
-
-        ParsePoint ->
-            { model | parsedValue = parse pointParser model.textToParse }
-
-        ParseAny ->
-            { model | parsedValue = parse parseAny model.textToParse }
-
-
 parse : Parser ParsedType -> String -> ParsedValue
 parse parser textToParse =
     textToParse
@@ -76,20 +48,21 @@ parse parser textToParse =
         |> ParsedResult
 
 
+chooseParser : String -> Parser ParsedType
+chooseParser parserType =
+    case parserType of
+        "float" ->
+            floatParser
+
+        "point" ->
+            pointParser
+
+        _ ->
+            P.problem "Unsupported identifier"
+
+
 parseAny : Parser ParsedType
 parseAny =
-    let
-        chooseParser parserType =
-            case parserType of
-                "float" ->
-                    floatParser
-
-                "point" ->
-                    pointParser
-
-                _ ->
-                    P.problem "Identifier should be 'float' or 'point'"
-    in
     P.getChompedString (P.chompUntil " ")
         |> P.andThen chooseParser
 
@@ -120,6 +93,32 @@ pointParser =
         )
 
 
+init : Model
+init =
+    { textToParse = "", parsedValue = None }
+
+
+
+-- ---------------------------
+-- UPDATE
+-- ---------------------------
+
+
+type Msg
+    = UpdateTextToParse String
+    | ParseText
+
+
+update : Msg -> Model -> Model
+update message model =
+    case message of
+        UpdateTextToParse text ->
+            { model | textToParse = text }
+
+        ParseText ->
+            { model | parsedValue = parse parseAny model.textToParse }
+
+
 
 -- ---------------------------
 -- VIEW
@@ -135,15 +134,11 @@ view model =
             , h1 [] [ text "How do Parsers work?" ]
             ]
         , div []
-            [ p [] [ text "Parsing Text" ]
+            [ p [] [ text "Supported Identifiers: float point" ]
             , textarea [ cols 50, rows 10, onInput UpdateTextToParse ] []
             , br [] []
-            , div []
-                [ button [ onClick ParseFloat ] [ text "Parse Float" ]
-                , button [ onClick ParsePoint ] [ text "Parse Point" ]
-                ]
             , br [] []
-            , button [ onClick ParseAny ] [ text "Figure It Out (float 1.0 or Point (1, 5)" ]
+            , button [ onClick ParseText ] [ text "Parse" ]
             ]
         , div []
             [ p [] [ text "Model" ]
